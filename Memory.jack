@@ -10,25 +10,95 @@
  */ 
 class Memory {
 
+    static Array ram;
+    static Array heap;
+    static Array freeList;
+
     /** Initializes the class. */
     function void init() {
+
+        let ram = 0;
+
+        let heap = 2048;
+        let freeList = 2048;
+
+        let heap[0] = 14355; //length
+        let heap[1] = 0; //next
+
+        return;
     }
 
     /** Returns the RAM value at the given address. */
     function int peek(int address) {
+        
+        return ram[address];
     }
 
     /** Sets the RAM value at the given address to the given value. */
     function void poke(int address, int value) {
+
+        let ram[address] = value;
+
+        return;
     }
 
     /** Finds an available RAM block of the given size and returns
      *  a reference to its base address. */
     function int alloc(int size) {
+
+        var Array currentSegment, block;
+        var int freeListNext;
+
+        let currentSegment = freeList;
+        let freeListNext = freeList[0];
+
+        while (true) {
+            if ( currentSegment[0] > (size + 1) ) { // segment is possible
+
+                if ( currentSegment[0] - size < 3 ) {
+                    let freeListNext = currentSegment[1];
+                    let block = currentSegment + 1;
+                    return block;
+                }
+                else {
+                    let currentSegment[0] = currentSegment[0] - (size + 1);
+                    let block = currentSegment + currentSegment[0] + 1;
+                    let currentSegment[block - 1] = size + 1;
+                    return block;
+                }
+            }
+            else {
+                let freeListNext = currentSegment + 1; //set up pointer in case we need to move it
+                let currentSegment = currentSegment[1]; //go to next segment
+                if (currentSegment = 0) {
+                    return false;
+                }
+            }
+        }
+
+        return false;
     }
 
     /** De-allocates the given object (cast as an array) by making
      *  it available for future allocations. */
     function void deAlloc(Array o) {
+
+        var Array currentSegment;
+
+        let currentSegment = freeList;
+
+        while (true) {
+
+            if ( currentSegment[1] = 0 ) {
+                let currentSegment[1] = o - 1;
+                let o[0] = 0;
+                return;
+            }
+            else {
+                let currentSegment = currentSegment[1];
+            }
+        }
+
+        return;
     }    
 }
