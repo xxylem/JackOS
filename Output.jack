@@ -17,10 +17,20 @@
 class Output {
 
     // Character map for displaying characters
-    static Array charMaps; 
+    static Array charMaps;
+
+    static int cursorX;
+    static int cursorY;
 
     /** Initializes the screen, and locates the cursor at the screen's top-left. */
     function void init() {
+        let cursorX = 0;
+        let cursorY = 0;
+
+        do Output.initMap();
+
+        return;
+
     }
 
     // Initializes the character map array
@@ -71,7 +81,7 @@ class Output {
         do Output.create(64,30,51,51,59,59,59,27,3,30,0,0);  // @
         do Output.create(63,30,51,51,24,12,12,0,12,12,0,0);  // ?
 
-        do Output.create(65,0,0,0,0,0,0,0,0,0,0,0);          // A ** TO BE FILLED **
+        do Output.create(65,12,51,51,51,63,51,51,51,51,0,0);          // A ** TO BE FILLED **
         do Output.create(66,31,51,51,51,31,51,51,51,31,0,0); // B
         do Output.create(67,28,54,35,3,3,3,35,54,28,0,0);    // C
         do Output.create(68,15,27,51,51,51,51,51,27,15,0,0); // D
@@ -176,28 +186,195 @@ class Output {
     /** Moves the cursor to the j-th column of the i-th row,
      *  and erases the character displayed there. */
     function void moveCursor(int i, int j) {
+
+        var int line, column, index, address, curByteVal;
+        var boolean leftHalf;
+
+        if (( j > 63 ) | ( j < 0 )){
+            let cursorX = 0;
+        }
+        else {
+            let cursorX = j;
+        }
+        if (( i > 22 ) | ( i < 0 )) {
+            let cursorY = 0;
+        }
+        else {
+            let cursorY = i;
+        }
+
+        if ((cursorX - (( cursorX / 2 ) * 2 )) = 0) {
+            let leftHalf = false;
+        }
+        else {
+            let leftHalf = true;
+        }
+
+        let index = 0;
+        let address = Output.getCursorAddress();
+
+        while ( index < 11 ) {
+            
+            let curByteVal = Memory.peek( address );
+
+            if (leftHalf) {
+                // blanks out left hand side, keeping right-hand side of word intact.
+                // 255 (decimal) = 0000000011111111 (binary)
+                let curByteVal = 255 & curByteVal;
+            }
+            else {
+                // blanks out right hand side, keeping left-hand side of word intact.
+                // -256 (decimal) = 1111111100000000 (binary)
+                let curByteVal = (-256) & curByteVal;
+            }
+
+            do Memory.poke( address, curByteVal );
+
+            let index = index + 1;
+            let address = address + 32;
+        }
+
+        return;
+
     }
+
 
     /** Displays the given character at the cursor location,
      *  and advances the cursor one column forward. */
     function void printChar(char c) {
+
+        var Array cMap;
+        var int line, column, i, newByteValue, address, curByteVal;
+        var boolean leftHalf;
+
+        if (( cursorX > 63 ) | ( cursorX < 0 )){
+            let cursorX = 0;
+        }
+        if (( cursorY > 22 ) | ( cursorY < 0 )) {
+            let cursorY = 0;
+        }
+
+        if ((cursorX - (( cursorX / 2 ) * 2 )) = 0) {
+            let leftHalf = false;
+        }
+        else {
+            let leftHalf = true;
+        }
+
+        let address = Output.getCursorAddress();
+        let cMap = Output.getMap( c );
+        let i = 0;
+
+        while ( i < 11 ) {
+
+            let newByteValue = cMap[i];
+            let curByteVal = Memory.peek( address );
+
+            if (leftHalf) {
+                // blanks out left hand side, keeping right-hand side of word intact.
+                // 255 (decimal) = 0000000011111111 (binary)
+                let curByteVal = 255 & curByteVal;
+                // shifts bitmap pattern to left half of 16-bit word.
+                let newByteValue = newByteValue * 256; 
+                // combines the RHS of original word with the new pattern on the left.
+                let newByteValue = newByteValue | curByteVal;
+            }
+            else {
+                // blanks out right hand side, keeping left-hand side of word intact.
+                // -256 (decimal) = 1111111100000000 (binary)
+                let curByteVal = (-256) & curByteVal;
+                // combines the LHS of original word with the new pattern on the right.
+                let newByteValue = newByteValue | curByteVal;
+            }
+
+            do Memory.poke( address, newByteValue );
+
+            let i = i + 1;
+            let address = address + 32;
+        }
+
+        do Output.advanceCursor();
+        return;
     }
+
+    
 
     /** displays the given string starting at the cursor location,
      *  and advances the cursor appropriately. */
     function void printString(String s) {
+
+        var int len, i, c;
+
+        let len = s.length();
+        let i = 0;
+
+        while ( i < len ) {
+            let c = s.charAt(i);
+            do Output.printChar(c);
+            let i = i + 1;
+        }
+        return;
     }
 
     /** Displays the given integer starting at the cursor location,
      *  and advances the cursor appropriately. */
     function void printInt(int i) {
+
+        var String intStr;
+
+        let intStr = String.new(16);
+        do intStr.setInt(i);
+
+        do Output.printString( intStr );
+        do intStr.dispose();
+
+        return;
     }
 
     /** Advances the cursor to the beginning of the next line. */
     function void println() {
+
+        do Output.moveCursor( cursorY + 1, 0 );
+        return;
     }
 
     /** Moves the cursor one column back. */
     function void backSpace() {
+
+        if ( cursorX < 1 ) {
+            
+            if ( cursorY < 1 ) {
+
+            }
+            else {
+                do Output.moveCursor( cursorY - 1, 63 );
+            }
+        }
+        else {   
+            do Output.moveCursor( cursorY, cursorX - 1 );
+        }
+
+        return;
+    }
+
+    function void advanceCursor() {
+
+        if ( cursorX > 62 ) {
+            if (cursorY > 21 ) {
+                do Output.moveCursor( 0, 0 );
+            }
+            else {
+                do Output.moveCursor( cursorY + 1, 0 );
+            }
+        }
+        else {
+            do Output.moveCursor( cursorY, cursorX + 1 );
+        }
+        return;
+    }
+
+    function int getCursorAddress() {
+
+        return (16384 + (cursorY * 352) + (cursorX / 2));
     }
 }
