@@ -11,33 +11,327 @@
  */
 class Screen {
 
+    static boolean color;
+    static Array screen;
+    static Array twoToThe;
+
     /** Initializes the Screen. */
     function void init() {
+        let screen = 16384;
+
+        let twoToThe = Array.new(15);
+        let twoToThe[0] = 1;
+        let twoToThe[1] = 2;
+        let twoToThe[2] = 4;
+        let twoToThe[3] = 8;
+        let twoToThe[4] = 16;
+        let twoToThe[5] = 32;
+        let twoToThe[6] = 64;
+        let twoToThe[7] = 128;
+        let twoToThe[8] = 256;
+        let twoToThe[9] = 512;
+        let twoToThe[10] = 1024;
+        let twoToThe[11] = 2048;
+        let twoToThe[12] = 4096;
+        let twoToThe[13] = 8192;
+        let twoToThe[14] = 16384;
+        let twoToThe[15] = (~32767);
+
+        do Screen.clearScreen();
+
+        do Screen.setColor(true);
+
+        return;
     }
 
     /** Erases the entire screen. */
     function void clearScreen() {
+        
+        var int address;
+
+        let address = 0;
+
+        while ( address < 8192 ) {
+            let screen[address] = 0;
+            let address = address + 1;
+        }
+
+        return;
     }
 
     /** Sets the current color, to be used for all subsequent drawXXX commands.
      *  Black is represented by true, white by false. */
     function void setColor(boolean b) {
+
+        let color = b;
+        return;
     }
 
     /** Draws the (x,y) pixel, using the current color. */
     function void drawPixel(int x, int y) {
+
+        var int address, curByteVal, byteOperand, xDiv16, xMod16;
+
+        // Check pixel in bounds of screen.
+        if ( ( x < 0 ) | ( x > 511 ) | ( y < 0 ) | ( y > 255 )) {
+            return;
+        }
+
+        let xDiv16 = x / 16;
+        let xMod16 = x - (xDiv16 * 16);
+
+        let address = (( 32 * y) + xDiv16 );
+        let curByteVal = screen[address];
+        let byteOperand = twoToThe[ xMod16 ];
+
+        if (color) {
+            let curByteVal = curByteVal | byteOperand;
+        }
+        else {
+            let curByteVal = curByteVal & ( ~ byteOperand );
+        }
+
+        let screen[address] = curByteVal;
+        return;
+
+    }
+
+    function void drawWord(int x, int y) {
+
+        var int address, curByteVal, byteOperand, xDiv16, xMod16;
+
+        // Check pixel in bounds of screen.
+        if ( ( x < 0 ) | ( x > 511 ) | ( y < 0 ) | ( y > 255 )) {
+            return;
+        }
+
+        let xDiv16 = x / 16;
+        let xMod16 = x - (xDiv16 * 16);
+
+        let address = (( 32 * y) + xDiv16 );
+        
+        let screen[address] = color;
+
+        return;
     }
 
     /** Draws a line from pixel (x1,y1) to pixel (x2,y2), using the current color. */
     function void drawLine(int x1, int y1, int x2, int y2) {
+
+        var int a, b, x, y, dx, dy, adyMinusbdx;
+
+        let a = 0;
+        let b = 0;
+        let adyMinusbdx = 0;
+
+        let x = x1;
+        let y = y1;
+        let dx = x2 - x1;
+        let dy = y2 - y1;
+
+
+        // Check for single point, horizontal and vertical lines.
+        if ( dx = 0 ) {
+            if (dy = 0 ) {
+                do Screen.drawPixel(x, y);
+                return;
+            }
+            do Screen.drawVerticalLine( x, y1, y2 );
+            return;
+        }
+        else { 
+            if ( dy = 0 ) {
+                do Screen.drawHorizontalLine(y, x1, x2);
+                return;
+            }
+        }
+
+        // Check for lines going left and swap end points.
+        if ( dx < 0 ) {
+            let dx = x1 - x2;
+            let dy = y1 - y2;
+            let x = x2;
+            let y = y2;
+
+        }
+
+        // Check for lines moving towards the top of the screen.
+        if ( dy < 0 ) {
+            while ((( a < dx ) | ( a = dx )) & (( b > dy ) | ( b = dy ))) {
+                do Screen.drawPixel( x + a, y + b );
+
+                if (adyMinusbdx > 0) {
+                    let a = a + 1;
+                    let adyMinusbdx = adyMinusbdx + dy;
+                }
+                else {
+                    let b = b - 1;
+                    let adyMinusbdx = adyMinusbdx + dx;
+                }
+            }
+        }
+        // Check for lines moving towards the bottom of the screen.
+        else {
+            while ((( a < dx ) | ( a = dx )) & (( b < dy ) | ( b = dy ))) {
+                do Screen.drawPixel( x + a, y + b );
+
+                if (adyMinusbdx < 0) {
+                    let a = a + 1;
+                    let adyMinusbdx = adyMinusbdx + dy;
+                }
+                else {
+                    let b = b + 1;
+                    let adyMinusbdx = adyMinusbdx - dx;
+                }
+            }
+        }
+        return;
+    }
+
+    function void drawHorizontalLine(int y, int x1, int x2) {
+
+        var int tmp, x, address, curByteVal, byteOperand, xDiv16, xMod16;
+
+        if (( x2 - x1 ) < 0 ) {
+            let tmp = x2;
+            let x2 = x1;
+            let x1 = tmp;
+        }
+
+        let x = x1;
+
+        // Check pixel in bounds of screen.
+        if ( ( x < 0 ) | ( x > 511 ) | ( y < 0 ) | ( y > 255 )) {
+            return;
+        }
+
+        let xDiv16 = x / 16;
+        let xMod16 = x - (xDiv16 * 16);
+
+        while ((( x < x2 ) | ( x = x2 ))  & ( xMod16 > 0)) {
+            
+            let address = (( 32 * y) + xDiv16 );
+            let curByteVal = screen[address];
+            let byteOperand = twoToThe[ xMod16 ];
+
+            if (color) {
+                let curByteVal = curByteVal | byteOperand;
+            }
+            else {
+                let curByteVal = curByteVal & ( ~ byteOperand );
+            }
+
+            let screen[address] = curByteVal;
+
+            let x = x + 1;
+            // Check pixel in bounds of screen.
+            if ( x > 511 ) {
+                return;
+            }
+            let xDiv16 = x / 16;
+            let xMod16 = x - (xDiv16 * 16);
+        }
+
+        while (( ( x < x2) | ( x = x2 )) & (( x2 - x ) > 15 )) {
+
+            let address = (( 32 * y) + xDiv16 );
+            let screen[address] = color;
+
+            let x = x + 16;
+            // Check pixel in bounds of screen.
+            if ( x > 511 ) {
+                return;
+            }
+            let xDiv16 = x / 16;
+            let xMod16 = x - (xDiv16 * 16);
+        }
+
+        while (( x < x2 ) | ( x = x2 )) {
+            
+            let address = (( 32 * y) + xDiv16 );
+            let curByteVal = screen[address];
+            let byteOperand = twoToThe[ xMod16 ];
+
+            if (color) {
+                let curByteVal = curByteVal | byteOperand;
+            }
+            else {
+                let curByteVal = curByteVal & ( ~ byteOperand );
+            }
+
+            let screen[address] = curByteVal;
+
+            let x = x + 1;
+            // Check pixel in bounds of screen.
+            if ( x > 511 ) {
+                return;
+            }
+            let xDiv16 = x / 16;
+            let xMod16 = x - (xDiv16 * 16);
+        }
+        return;
+    }
+
+    function int mod(int a, int b) {
+        
+        return a - ((a/b) * b);
+    }
+
+    function void drawVerticalLine(int x, int y1, int y2) {
+        
+        var int y, dy, i;
+
+        let dy = y2 - y1;
+
+        if ( dy < 0 ) {
+            let y = y2;
+            let dy = -dy;
+        }
+        else {
+            let y = y1;
+        }
+
+        while ( i < dy ) {
+            do Screen.drawPixel( x, y + i );
+            let i = i + 1;
+        }
+
+        return;
     }
 
     /** Draws a filled rectangle whose top left corner is (x1, y1)
      * and bottom right corner is (x2,y2), using the current color. */
     function void drawRectangle(int x1, int y1, int x2, int y2) {
+        
+        var int dy, i;
+
+        let dy = y2 - y1;
+        let i = 0;
+
+        while ( i < dy ) {
+            do Screen.drawHorizontalLine( y1 + i, x1, x2 );
+            let i = i + 1;
+        }
+
+        return;
     }
 
     /** Draws a filled circle of radius r<=181 around (x,y), using the current color. */
     function void drawCircle(int x, int y, int r) {
+
+        var int dy, dySq, rSq, rtRsqMinusDYsq;
+
+        let dy = -r;
+        let rSq = r * r;
+
+        while ( ( dy < r ) | ( dy = r ) ) {
+            let dySq = dy * dy;
+            let rtRsqMinusDYsq = Math.sqrt( rSq - dySq);
+
+            do Screen.drawHorizontalLine( y + dy, x - rtRsqMinusDYsq, x + rtRsqMinusDYsq);
+            let dy = dy + 1;
+        }
+
+        return;
     }
 }

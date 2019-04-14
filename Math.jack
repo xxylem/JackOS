@@ -9,14 +9,13 @@
  */
 class Math {
 
-    static int wordLength, wMinus1;
+    static int wordLength;
     static Array twoToThe;
 
     /** Initializes the library. */
     function void init() {
 
         let wordLength = 16;
-        let wMinus1 = 15;
 
         let twoToThe = Array.new(15);
         let twoToThe[0] = 1;
@@ -34,7 +33,7 @@ class Math {
         let twoToThe[12] = 4096;
         let twoToThe[13] = 8192;
         let twoToThe[14] = 16384;
-        let twoToThe[15] = -32768;
+        let twoToThe[15] = (~32767);
 
         return;
     }
@@ -64,7 +63,7 @@ class Math {
         let i   = 0;
         let shiftedX = x;
 
-        while ( i < wMinus1 ) {
+        while ( i < wordLength ) {
             if ( Math.bit( y, i ) ) {
                 let sum = sum + shiftedX;
             }
@@ -79,7 +78,7 @@ class Math {
         
         var int compareVal;
 
-        let compareVal = twoToThe[15 - i];
+        let compareVal = twoToThe[i];
 
         return ( (x & compareVal) = compareVal );
         
@@ -139,14 +138,15 @@ class Math {
         var int y, j, cond, condSq;
 
         let y = 0;
-        let j = 8;
+        let j = 7;
 
         while ( j > (-1) ) {
 
             let cond = ( y + twoToThe[j] );
             let condSq = cond * cond;
 
-            if (( condSq < ( x + 1)) & ( condSq > 0 )) {
+            if (( condSq < ( x ) | ( condSq = x )) 
+                & ( condSq > 0 )) {
                 let y = cond;
             }
 
@@ -154,9 +154,6 @@ class Math {
         }
 
         return y;
-
-
-
     }
 
     /** Returns the greater number. */
