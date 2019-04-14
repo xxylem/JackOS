@@ -22,7 +22,7 @@ class Memory {
         let heap = 2048;
         let freeList = 2048;
 
-        let heap[0] = 14355; //length
+        let heap[0] = 14335; //length
         let heap[1] = 0; //next
 
         return;
@@ -30,53 +30,72 @@ class Memory {
 
     /** Returns the RAM value at the given address. */
     function int peek(int address) {
-        
-        return ram[address];
+        if (( address > (-1) ) & ( address < 24577 )) {
+            return ram[address];
+        }
+        else {
+            return 0;
+        }
     }
 
     /** Sets the RAM value at the given address to the given value. */
     function void poke(int address, int value) {
-
-        let ram[address] = value;
+        if (( address > (-1) ) & ( address < 24577 )) {
+            let ram[address] = value;
+        }
 
         return;
+    }
+
+    function int next(Array a) {
+        return a[1];
+    }
+    function int segmentSize(Array a) {
+        return a[0];
     }
 
     /** Finds an available RAM block of the given size and returns
      *  a reference to its base address. */
     function int alloc(int size) {
 
-        var Array currentSegment, block;
-        var int freeListNext;
+        var Array currentSegment, newBlockBaseAddress, previousSegment;
+        var int currentSegmentSize, currentNextLocation;
 
         let currentSegment = freeList;
-        let freeListNext = freeList[0];
+        let previousSegment = currentSegment;
+        let currentSegmentSize = Memory.segmentSize(currentSegment);
+        let currentNextLocation = Memory.next(currentSegment);
 
         while (true) {
-            if ( currentSegment[0] > (size + 1) ) { // segment is possible
+            if ( currentSegmentSize > (size + 1) ) { 
+                // segment is possible
 
-                if ( currentSegment[0] - size < 3 ) {
-                    let freeListNext = currentSegment[1];
-                    let block = currentSegment + 1;
-                    return block;
+                if (( currentSegmentSize - size) < 3 ) {
+                    let previousSegment[1] = currentNextLocation;
+                    let newBlockBaseAddress = currentSegment + 1;
+                    return newBlockBaseAddress;
                 }
                 else {
-                    let currentSegment[0] = currentSegment[0] - (size + 1);
-                    let block = currentSegment + currentSegment[0] + 1;
-                    let currentSegment[block - 1] = size + 1;
-                    return block;
+                    let currentSegment[0] = currentSegmentSize - (size + 1);
+                    let currentSegmentSize = Memory.segmentSize(currentSegment);
+                    let newBlockBaseAddress = currentSegment + currentSegmentSize;
+                    let newBlockBaseAddress[0] = size + 1;
+                    return ( newBlockBaseAddress + 1);
                 }
             }
             else {
-                let freeListNext = currentSegment + 1; //set up pointer in case we need to move it
-                let currentSegment = currentSegment[1]; //go to next segment
+                let previousSegment = currentSegment; //set up pointer in case we need to move it
+                let currentSegment = currentNextLocation; //go to next segment
                 if (currentSegment = 0) {
-                    return false;
+                    return 0;
                 }
+
+                let currentSegmentSize = Memory.segmentSize(currentSegment);
+                let currentNextLocation = Memory.next(currentSegment);
             }
         }
 
-        return false;
+        return 0;
     }
 
     /** De-allocates the given object (cast as an array) by making

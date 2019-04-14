@@ -11,11 +11,11 @@ class Sys {
     /** Performs all the initializations required by the OS. */
     function void init() {
 
-        do Keyboard.init();
-        do Math.init();
         do Memory.init();
-        do Output.init();
         do Screen.init();
+        do Keyboard.init();
+        do Output.init();
+        do Math.init();
         do Main.main();
 
         do Sys.halt();
@@ -42,7 +42,7 @@ class Sys {
 
             let j = 0;
 
-            while ( j < 15 ) {
+            while ( j < 2 ) {
                 do Math.divide(10000, 4242);
                 let j = j + 1;
             }

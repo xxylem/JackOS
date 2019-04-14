@@ -12,14 +12,14 @@
 class Screen {
 
     static boolean color;
-    static Array screen;
+    static int screen;
     static Array twoToThe;
 
     /** Initializes the Screen. */
     function void init() {
         let screen = 16384;
 
-        let twoToThe = Array.new(15);
+        let twoToThe = Array.new(16);
         let twoToThe[0] = 1;
         let twoToThe[1] = 2;
         let twoToThe[2] = 4;
@@ -49,10 +49,10 @@ class Screen {
         
         var int address;
 
-        let address = 0;
+        let address = screen;
 
-        while ( address < 8192 ) {
-            let screen[address] = 0;
+        while ( address < 24576 ) {
+            do Memory.poke(address, 0);
             let address = address + 1;
         }
 
